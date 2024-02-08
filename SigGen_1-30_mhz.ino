@@ -1,16 +1,40 @@
+#include <Adafruit_MCP4725.h>
+Adafruit_MCP4725 MCP4725;
+#include <SoftwareSerial.h>
+#include <EEPROM.h>
+#include <Wire.h>
 // I have lost initial code, have to remake it from ground 0. Work In Progress !! 
 // I use PU2CLR lib to adress multiple i2c extenders.
 
 #include <pu2clr_mcp23008.h>
+
+
+const byte rxPin = 4;
+const byte txPin = 5;
+double frecventa = 14000000;
+// Set up a new SoftwareSerial object
+SoftwareSerial mySerial (rxPin, txPin);
+String stopBit  ;
+String dfd = "" ;
+#define W_CLK 8   // Pin 8 - connect to AD9850 module word load clock pin (CLK)
+#define FQ_UD 9   // Pin 9 - connect to freq update pin (FQ)
+#define DATA 10   // Pin 10 - connect to serial data load pin (DATA)
+#define RESET 11  // Pin 11 - connect to reset pin (RST) 
+#define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
+
+
 MCP dividerA;
 MCP dividerB;
 MCP dividerC;
 MCP dividerD;
 // HMC472 truth table is reversed, we need to compute AND negate all 6 bits.
 
-int att = 38 ; // Enter here value in dB
+int att = 10   ; // Enter here value in dB
+String freq ; 
+String gain ;
+String relative_att = "0" ;
 
-int incomingByte = 0; // for incoming serial data
+String incomingByte = "" ; // for incoming serial data
 int a = 0 ;
 int b = 0 ;
 int c = 0 ;
@@ -35,11 +59,40 @@ void setup()
       dividerB.turnGpioOn(MCP_GPIO0);dividerB.turnGpioOn(MCP_GPIO1); dividerB.turnGpioOn(MCP_GPIO2);dividerB.turnGpioOn(MCP_GPIO3);dividerB.turnGpioOn(MCP_GPIO4);dividerB.turnGpioOn(MCP_GPIO5);dividerB.turnGpioOn(MCP_GPIO6);dividerB.turnGpioOn(MCP_GPIO7);
       dividerC.turnGpioOn(MCP_GPIO0);dividerC.turnGpioOn(MCP_GPIO1); dividerC.turnGpioOn(MCP_GPIO2);dividerC.turnGpioOn(MCP_GPIO3);dividerC.turnGpioOn(MCP_GPIO4);dividerC.turnGpioOn(MCP_GPIO5);dividerC.turnGpioOn(MCP_GPIO6);dividerC.turnGpioOn(MCP_GPIO7);
       dividerD.turnGpioOn(MCP_GPIO0);dividerD.turnGpioOn(MCP_GPIO1); dividerD.turnGpioOn(MCP_GPIO2);dividerD.turnGpioOn(MCP_GPIO3);dividerD.turnGpioOn(MCP_GPIO4);dividerD.turnGpioOn(MCP_GPIO5);dividerD.turnGpioOn(MCP_GPIO6);dividerD.turnGpioOn(MCP_GPIO7);
+ pinMode(FQ_UD, OUTPUT);
+  pinMode(W_CLK, OUTPUT);
+  pinMode(DATA, OUTPUT);
+  pinMode(RESET, OUTPUT); 
+  pulseHigh(RESET);
+  pulseHigh(W_CLK);
+  pulseHigh(FQ_UD);  // this pulse enables serial mode on the AD9850 - Datasheet page 12.
+  ad9850(frecventa);
+  MCP4725.begin(0x60);
+
       
       Serial.begin(9600);
-      SerialUSB.begin(9600);
+      mySerial.begin(9600);
       compute() ;     
     }
+
+void ad9850(double frequency) {  
+  int32_t freq = frequency  * 4294967295/125000000;  // note 125 MHz clock on 9850.  You can make 'slight' tuning variations here by adjusting the clock frequency.
+  for (int b_it = 0; b_it < 4; b_it++, freq>>=8) {
+    ad9850_serial_send(freq & 0xFF);
+  }
+  ad9850_serial_send(0x000);   // Final control byte, all 0 for 9850 chip
+  pulseHigh(FQ_UD);  // Done!  Should see output
+}
+void ad9850_serial_send(byte data)
+{
+  for (int i=0; i<8; i++, data>>=1) {
+    digitalWrite(DATA, data & 0x01);
+    pulseHigh(W_CLK);
+  }
+}
+
+
+
 
 void compute()
 {
@@ -120,10 +173,21 @@ Serial.println("writting divider D with " + byte_D );
 
 void loop()
 {
- if (SerialUSB.available() > 0) {
+ if (mySerial.available() > 0) {
     // read the incoming byte:
-    incomingByte = SerialUSB.read();
-    att = incomingByte;
+    char plm = char(mySerial.read());
+    if (String(plm) == "S" ) {freq = incomingByte ; plm = "" ; incomingByte = "" ;}
+    if (String(plm) == "T" ) {gain = incomingByte ; plm = "" ; incomingByte = "" ;}
+    if (String(plm) == "Y" ) {relative_att  = incomingByte ; plm = "" ; incomingByte = "" ;}
+    incomingByte += plm ;  
+    freq.replace ("V", ""); gain.replace ("V", ""); relative_att.replace ("V", "");
+    Serial.println(freq.toInt()); Serial.println(gain); Serial.println(relative_att);
+    ad9850(freq.toInt());
+    att = relative_att.toInt();
     compute();
+    //MCP4725.setVoltage(4096 - gain.toInt(), false);
+    
   }
+
+
 }
