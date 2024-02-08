@@ -6,7 +6,7 @@ MCP dividerA;
 MCP dividerB;
 MCP dividerC;
 MCP dividerD;
-// HMC472 addressing bits are LOW instead of HIGH, we need to compute AND negate all 6 bits.
+// HMC472 truth table is reversed, we need to compute AND negate all 6 bits.
 
 int att = 38 ; // Enter here value in dB
 
