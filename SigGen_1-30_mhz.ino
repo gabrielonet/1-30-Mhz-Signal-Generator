@@ -3,31 +3,35 @@
 #include <SoftwareSerial.h>
 #include <EEPROM.h>
 #include <Wire.h>
+
+// I use PU2CLR lib for the ability to address multiple i2c extenders.
 #include <pu2clr_mcp23008.h>
-// I use PU2CLR lib to adress multiple i2c extenders.
 
-
-const byte rxPin = 4;
-const byte txPin = 5;
-double frecventa = 14000000;
-// Set up a new SoftwareSerial object
-SoftwareSerial mySerial (rxPin, txPin);
+// Set DAC to controll S9+60 dB for a steady 50 mV RMS/50 ohms
 Adafruit_MCP4725 MCP4725;
 
-String stopBit  ;
-String dfd  ;
+// Define AD9850 DDS controll pins
 #define W_CLK 8   // Pin 8 - connect to AD9850 module word load clock pin (CLK)
 #define FQ_UD 9   // Pin 9 - connect to freq update pin (FQ)
 #define DATA 10   // Pin 10 - connect to serial data load pin (DATA)
 #define RESET 11  // Pin 11 - connect to reset pin (RST) 
 #define pulseHigh(pin) {digitalWrite(pin, HIGH); digitalWrite(pin, LOW); }
 
-MCP dividerA;
+// Instantiate 4 x MCP23008 i2c GPIO extenders  
+MCP dividerA; 
 MCP dividerB;
-MCP dividerC;
+MCP dividerC; 
 MCP dividerD;
-// HMC472 truth table is reversed, we need to compute AND negate all 6 bits.
 
+// Set up a new SoftwareSerial object for Nextion display
+const byte rxPin = 4;
+const byte txPin = 5;
+SoftwareSerial mySerial (rxPin, txPin);
+
+int debug = 1; // Set to 0 when normal mode
+double frecventa = 14000000;
+String stopBit  ;
+String dfd  ;
 int att  ;
 String freq ; 
 String gain ;
@@ -50,11 +54,7 @@ String byte_D ;
 
 void setup()
     {
-      dividerA.setup(0x20); dividerB.setup(0x21); dividerC.setup(0x22); dividerD.setup(0x23);
-      dividerA.turnGpioOn(MCP_GPIO0);dividerA.turnGpioOn(MCP_GPIO1); dividerA.turnGpioOn(MCP_GPIO2);dividerA.turnGpioOn(MCP_GPIO3);dividerA.turnGpioOn(MCP_GPIO4);dividerA.turnGpioOn(MCP_GPIO5);dividerA.turnGpioOn(MCP_GPIO6);dividerA.turnGpioOn(MCP_GPIO7);
-      dividerB.turnGpioOn(MCP_GPIO0);dividerB.turnGpioOn(MCP_GPIO1); dividerB.turnGpioOn(MCP_GPIO2);dividerB.turnGpioOn(MCP_GPIO3);dividerB.turnGpioOn(MCP_GPIO4);dividerB.turnGpioOn(MCP_GPIO5);dividerB.turnGpioOn(MCP_GPIO6);dividerB.turnGpioOn(MCP_GPIO7);
-      dividerC.turnGpioOn(MCP_GPIO0);dividerC.turnGpioOn(MCP_GPIO1); dividerC.turnGpioOn(MCP_GPIO2);dividerC.turnGpioOn(MCP_GPIO3);dividerC.turnGpioOn(MCP_GPIO4);dividerC.turnGpioOn(MCP_GPIO5);dividerC.turnGpioOn(MCP_GPIO6);dividerC.turnGpioOn(MCP_GPIO7);
-      dividerD.turnGpioOn(MCP_GPIO0);dividerD.turnGpioOn(MCP_GPIO1); dividerD.turnGpioOn(MCP_GPIO2);dividerD.turnGpioOn(MCP_GPIO3);dividerD.turnGpioOn(MCP_GPIO4);dividerD.turnGpioOn(MCP_GPIO5);dividerD.turnGpioOn(MCP_GPIO6);dividerD.turnGpioOn(MCP_GPIO7);
+  
       pinMode(FQ_UD, OUTPUT);
       pinMode(W_CLK, OUTPUT);
       pinMode(DATA, OUTPUT);
@@ -62,10 +62,20 @@ void setup()
       pulseHigh(RESET);
       pulseHigh(W_CLK);
       pulseHigh(FQ_UD);  // this pulse enables serial mode on the AD9850 - Datasheet page 12.
-      ad9850(frecventa);
-      MCP4725.begin(0x60);
+      dividerA.setup(0x20,0);
+      dividerB.setup(0x21,0);
+      dividerC.setup(0x22,0);
+      dividerD.setup(0x23,0);
+      dividerA.setup(0x20); dividerB.setup(0x21); dividerC.setup(0x22); dividerD.setup(0x23);
+      dividerA.turnGpioOn(MCP_GPIO0);dividerA.turnGpioOn(MCP_GPIO1); dividerA.turnGpioOn(MCP_GPIO2);dividerA.turnGpioOn(MCP_GPIO3);dividerA.turnGpioOn(MCP_GPIO4);dividerA.turnGpioOn(MCP_GPIO5);dividerA.turnGpioOn(MCP_GPIO6);dividerA.turnGpioOn(MCP_GPIO7);
+      dividerB.turnGpioOn(MCP_GPIO0);dividerB.turnGpioOn(MCP_GPIO1); dividerB.turnGpioOn(MCP_GPIO2);dividerB.turnGpioOn(MCP_GPIO3);dividerB.turnGpioOn(MCP_GPIO4);dividerB.turnGpioOn(MCP_GPIO5);dividerB.turnGpioOn(MCP_GPIO6);dividerB.turnGpioOn(MCP_GPIO7);
+      dividerC.turnGpioOn(MCP_GPIO0);dividerC.turnGpioOn(MCP_GPIO1); dividerC.turnGpioOn(MCP_GPIO2);dividerC.turnGpioOn(MCP_GPIO3);dividerC.turnGpioOn(MCP_GPIO4);dividerC.turnGpioOn(MCP_GPIO5);dividerC.turnGpioOn(MCP_GPIO6);dividerC.turnGpioOn(MCP_GPIO7);
+      dividerD.turnGpioOn(MCP_GPIO0);dividerD.turnGpioOn(MCP_GPIO1); dividerD.turnGpioOn(MCP_GPIO2);dividerD.turnGpioOn(MCP_GPIO3);dividerD.turnGpioOn(MCP_GPIO4);dividerD.turnGpioOn(MCP_GPIO5);dividerD.turnGpioOn(MCP_GPIO6);dividerD.turnGpioOn(MCP_GPIO7);
+      
       Serial.begin(115200);
-      mySerial.begin(9600);
+      mySerial.begin(9600);      
+      ad9850(frecventa);
+      MCP4725.begin(0x60);      
       compute() ;     
     }
 
@@ -87,6 +97,7 @@ void ad9850_serial_send(byte data)
 
 
 void compute(){
+   // HMC472 truth table is reversed, we need to compute AND negate all 6 bits.
    att = relative_att.toInt();
    int  times = att / 30 ;
     if (times == 4) {
@@ -145,16 +156,19 @@ void compute(){
     bit_5 = !bitRead(num, 0); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO5);} else {dividerD.turnGpioOff(MCP_GPIO5);}
     byte_D = String(bit_0) + "," + String(bit_1) + "," + String(bit_2) + "," + String(bit_3) + "," + String(bit_4) + "," + String(bit_5);
     
-    // Here we should call 4 different instances of MCP23008 to write values into dividers via i2c bus.
-    Serial.println("Computing values for " + String(att) + "dB");  
-    Serial.println("Divider A attenuation = " + String(a) + "dB");
-    Serial.println("Divider B attenuation = " + String(b) + "dB");
-    Serial.println("Divider C attenuation = " + String(c) + "dB");
-    Serial.println("Divider D attenuation = " + String(d) + "dB");
-    Serial.println("writting divider A with " + byte_A );
-    Serial.println("writting divider B with " + byte_B );
-    Serial.println("writting divider C with " + byte_C );
-    Serial.println("writting divider D with " + byte_D );
+    if (debug == 1) {
+        Serial.println( "Freq: " + freq + ";  Gain: " + gain + ";   ATT:" + relative_att );
+        Serial.println("Computing values for " + String(att) + "dB");  
+        Serial.println("Divider A attenuation = " + String(a) + "dB");
+        Serial.println("Divider B attenuation = " + String(b) + "dB");
+        Serial.println("Divider C attenuation = " + String(c) + "dB");
+        Serial.println("Divider D attenuation = " + String(d) + "dB");
+        Serial.println("writting divider A with " + byte_A );
+        Serial.println("writting divider B with " + byte_B );
+        Serial.println("writting divider C with " + byte_C );
+        Serial.println("writting divider D with " + byte_D );
+        Serial.println("___________________________________________________________________________________ \n");    
+    }
     ad9850(freq.toInt());
     MCP4725.setVoltage(4096 - gain.toInt(), false);
 }
@@ -164,11 +178,8 @@ void loop()
  if (mySerial.available() > 0) {
     // read the incoming byte:
     dfd += char(mySerial.read());
-    if (dfd.endsWith("S") ) {         freq = dfd ; dfd = "" ; }
-    if (dfd.endsWith("T") ) {         gain = dfd ; dfd = "" ; }
-    if (dfd.endsWith("Y") ) {relative_att  = dfd ; dfd = "" ; }
-      freq.replace ("S", ""); gain.replace ("T", ""); relative_att.replace ("Y", "");
-      Serial.println(freq.toInt()); Serial.println(gain.toInt()); Serial.println(relative_att.toInt());
-      compute();
-  }
+    if (dfd.endsWith("S") ) {         freq = dfd ; dfd = "" ;         freq.replace ("S", ""); compute();}
+    if (dfd.endsWith("T") ) {         gain = dfd ; dfd = "" ;         gain.replace ("T", ""); compute();}
+    if (dfd.endsWith("Y") ) {relative_att  = dfd ; dfd = "" ; relative_att.replace ("Y", ""); compute();}
+}
 }
