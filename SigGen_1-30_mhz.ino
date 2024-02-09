@@ -7,7 +7,7 @@
 // I use PU2CLR lib for the ability to address multiple i2c extenders.
 #include <pu2clr_mcp23008.h>
 
-// Set DAC to controll S9+60 dB for a steady 50 mV RMS/50 ohms
+// Set DAC to control S9+60 dB level for a steady 50 mV RMS/50 ohms
 Adafruit_MCP4725 MCP4725;
 
 // Define AD9850 DDS controll pins
@@ -28,7 +28,7 @@ const byte rxPin = 4;
 const byte txPin = 5;
 SoftwareSerial mySerial (rxPin, txPin);
 
-int debug = 1; // Set to 0 when normal mode
+int debug = 0; // Set to 0 when normal mode
 double frecventa = 14000000;
 String stopBit  ;
 String dfd  ;
