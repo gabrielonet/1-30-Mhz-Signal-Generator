@@ -28,7 +28,7 @@ const byte rxPin = 4;
 const byte txPin = 5;
 SoftwareSerial mySerial (rxPin, txPin);
 
-int debug = 0; // Set to 0 when normal mode
+int debug = 1; // Set to 0 when normal mode
 double frecventa = 14000000;
 String stopBit  ;
 String dfd  ;
@@ -62,11 +62,14 @@ void setup()
       pulseHigh(RESET);
       pulseHigh(W_CLK);
       pulseHigh(FQ_UD);  // this pulse enables serial mode on the AD9850 - Datasheet page 12.
-      dividerA.setup(0x20,0);
-      dividerB.setup(0x21,0);
-      dividerC.setup(0x22,0);
-      dividerD.setup(0x23,0);
-      dividerA.setup(0x20); dividerB.setup(0x21); dividerC.setup(0x22); dividerD.setup(0x23);
+      //dividerA.setup(0x20,0);
+      //dividerB.setup(0x21,0);
+      //dividerC.setup(0x22,0);
+      //dividerD.setup(0x23,0);
+      dividerA.setup(0x20); 
+      dividerB.setup(0x21); 
+      dividerC.setup(0x22); 
+      dividerD.setup(0x23);
       dividerA.turnGpioOn(MCP_GPIO0);dividerA.turnGpioOn(MCP_GPIO1); dividerA.turnGpioOn(MCP_GPIO2);dividerA.turnGpioOn(MCP_GPIO3);dividerA.turnGpioOn(MCP_GPIO4);dividerA.turnGpioOn(MCP_GPIO5);dividerA.turnGpioOn(MCP_GPIO6);dividerA.turnGpioOn(MCP_GPIO7);
       dividerB.turnGpioOn(MCP_GPIO0);dividerB.turnGpioOn(MCP_GPIO1); dividerB.turnGpioOn(MCP_GPIO2);dividerB.turnGpioOn(MCP_GPIO3);dividerB.turnGpioOn(MCP_GPIO4);dividerB.turnGpioOn(MCP_GPIO5);dividerB.turnGpioOn(MCP_GPIO6);dividerB.turnGpioOn(MCP_GPIO7);
       dividerC.turnGpioOn(MCP_GPIO0);dividerC.turnGpioOn(MCP_GPIO1); dividerC.turnGpioOn(MCP_GPIO2);dividerC.turnGpioOn(MCP_GPIO3);dividerC.turnGpioOn(MCP_GPIO4);dividerC.turnGpioOn(MCP_GPIO5);dividerC.turnGpioOn(MCP_GPIO6);dividerC.turnGpioOn(MCP_GPIO7);
@@ -101,61 +104,59 @@ void compute(){
    att = relative_att.toInt();
    int  times = att / 30 ;
     if (times == 4) {
-      a  = 30 , b=30, c = 30, d = att - (a + b +c) ;
+      a  = 30 , b=30, c = 30, d = 30 ;
       }
 
     if (times == 3) {
-      a  = 30 , b = 30, c = 30, d = att - (a + b +c) ;
+      d  = 30 , c = 30, b = 30, a = att - (d + b + c) ;
       }  
     if (times == 2) {
-      a  = 0 , b = 30, c = 30, d = att - (a + b +c) ;
+      a  = 0 , d = 30, c = 30, b = att - (a + d + c) ;
       }  
     if (times == 1) {
-      a  = 0 , b = 0, c = 30, d = att - (a + b +c) ;
+      a  = 0 , b = 0, d = 30, c = att - (a + b + d) ;
       }  
     if (times == 0) {
-      a  = 0 , b = 0, c = 0, d = att - (a + b +c) ;
+      a  = 0 , b = 0, c = 0,  d = att - (a + b +c) ;
     }
 
     num = a *2 ;
-    bit_0 = !bitRead(num, 5); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO0);} else {dividerA.turnGpioOff(MCP_GPIO0);}
-    bit_1 = !bitRead(num, 4); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO1);} else {dividerA.turnGpioOff(MCP_GPIO1);}
-    bit_2 = !bitRead(num, 3); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO2);} else {dividerA.turnGpioOff(MCP_GPIO2);}
-    bit_3 = !bitRead(num, 2); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO3);} else {dividerA.turnGpioOff(MCP_GPIO3);}
-    bit_4 = !bitRead(num, 1); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO4);} else {dividerA.turnGpioOff(MCP_GPIO4);}
-    bit_5 = !bitRead(num, 0); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO5);} else {dividerA.turnGpioOff(MCP_GPIO5);}
-    byte_A = String(bit_0) + "," + String(bit_1) + "," + String(bit_2) + "," + String(bit_3) + "," + String(bit_4) + "," + String(bit_5);
+    bit_0 = !bitRead(num, 0); if (bit_0 == 1){ dividerA.turnGpioOn(MCP_GPIO0);} else {dividerA.turnGpioOff(MCP_GPIO0);}
+    bit_1 = !bitRead(num, 1); if (bit_1 == 1){ dividerA.turnGpioOn(MCP_GPIO1);} else {dividerA.turnGpioOff(MCP_GPIO1);}
+    bit_2 = !bitRead(num, 2); if (bit_2 == 1){ dividerA.turnGpioOn(MCP_GPIO2);} else {dividerA.turnGpioOff(MCP_GPIO2);}
+    bit_3 = !bitRead(num, 3); if (bit_3 == 1){ dividerA.turnGpioOn(MCP_GPIO3);} else {dividerA.turnGpioOff(MCP_GPIO3);}
+    bit_4 = !bitRead(num, 4); if (bit_4 == 1){ dividerA.turnGpioOn(MCP_GPIO4);} else {dividerA.turnGpioOff(MCP_GPIO4);}
+    bit_5 = !bitRead(num, 5); if (bit_5 == 1){ dividerA.turnGpioOn(MCP_GPIO5);} else {dividerA.turnGpioOff(MCP_GPIO5);}
+    byte_A = String(bit_5) + "," + String(bit_4) + "," + String(bit_3) + "," + String(bit_2) + "," + String(bit_1) + "," + String(bit_0);
     
     
     num = b *2 ;
-    bit_0 = !bitRead(num, 5); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO0);} else {dividerB.turnGpioOff(MCP_GPIO0);}
-    bit_1 = !bitRead(num, 4); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO1);} else {dividerB.turnGpioOff(MCP_GPIO1);}
-    bit_2 = !bitRead(num, 3); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO2);} else {dividerB.turnGpioOff(MCP_GPIO2);}
-    bit_3 = !bitRead(num, 2); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO3);} else {dividerB.turnGpioOff(MCP_GPIO3);}
-    bit_4 = !bitRead(num, 1); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO4);} else {dividerB.turnGpioOff(MCP_GPIO4);}
-    bit_5 = !bitRead(num, 0); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO5);} else {dividerB.turnGpioOff(MCP_GPIO5);}
-    byte_B = String(bit_0) + "," + String(bit_1) + "," + String(bit_2) + "," + String(bit_3) + "," + String(bit_4) + "," + String(bit_5);
+    bit_0 = !bitRead(num, 0); if (bit_0 == 1){ dividerB.turnGpioOn(MCP_GPIO0);} else {dividerB.turnGpioOff(MCP_GPIO0);}
+    bit_1 = !bitRead(num, 1); if (bit_1 == 1){ dividerB.turnGpioOn(MCP_GPIO1);} else {dividerB.turnGpioOff(MCP_GPIO1);}
+    bit_2 = !bitRead(num, 2); if (bit_2 == 1){ dividerB.turnGpioOn(MCP_GPIO2);} else {dividerB.turnGpioOff(MCP_GPIO2);}
+    bit_3 = !bitRead(num, 3); if (bit_3 == 1){ dividerB.turnGpioOn(MCP_GPIO3);} else {dividerB.turnGpioOff(MCP_GPIO3);}
+    bit_4 = !bitRead(num, 4); if (bit_4 == 1){ dividerB.turnGpioOn(MCP_GPIO4);} else {dividerB.turnGpioOff(MCP_GPIO4);}
+    bit_5 = !bitRead(num, 5); if (bit_5 == 1){ dividerB.turnGpioOn(MCP_GPIO5);} else {dividerB.turnGpioOff(MCP_GPIO5);}
+    byte_B = String(bit_5) + "," + String(bit_4) + "," + String(bit_3) + "," + String(bit_2) + "," + String(bit_1) + "," + String(bit_0);
     
     
     num = c *2 ;
-    bit_0 = !bitRead(num, 5); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO0);} else {dividerC.turnGpioOff(MCP_GPIO0);}
-    bit_1 = !bitRead(num, 4); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO1);} else {dividerC.turnGpioOff(MCP_GPIO1);}
-    bit_2 = !bitRead(num, 3); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO2);} else {dividerC.turnGpioOff(MCP_GPIO2);}
-    bit_3 = !bitRead(num, 2); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO3);} else {dividerC.turnGpioOff(MCP_GPIO3);}
-    bit_4 = !bitRead(num, 1); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO4);} else {dividerC.turnGpioOff(MCP_GPIO4);}
-    bit_5 = !bitRead(num, 0); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO5);} else {dividerC.turnGpioOff(MCP_GPIO5);}
-    byte_C = String(bit_0) + "," + String(bit_1) + "," + String(bit_2) + "," + String(bit_3) + "," + String(bit_4) + "," + String(bit_5);
-    
+    bit_0 = !bitRead(num, 0); if (bit_0 == 1){ dividerC.turnGpioOn(MCP_GPIO0);} else {dividerC.turnGpioOff(MCP_GPIO0);}
+    bit_1 = !bitRead(num, 1); if (bit_1 == 1){ dividerC.turnGpioOn(MCP_GPIO1);} else {dividerC.turnGpioOff(MCP_GPIO1);}
+    bit_2 = !bitRead(num, 2); if (bit_2 == 1){ dividerC.turnGpioOn(MCP_GPIO2);} else {dividerC.turnGpioOff(MCP_GPIO2);}
+    bit_3 = !bitRead(num, 3); if (bit_3 == 1){ dividerC.turnGpioOn(MCP_GPIO3);} else {dividerC.turnGpioOff(MCP_GPIO3);}
+    bit_4 = !bitRead(num, 4); if (bit_4 == 1){ dividerC.turnGpioOn(MCP_GPIO4);} else {dividerC.turnGpioOff(MCP_GPIO4);}
+    bit_5 = !bitRead(num, 5); if (bit_5 == 1){ dividerC.turnGpioOn(MCP_GPIO5);} else {dividerC.turnGpioOff(MCP_GPIO5);}
+    byte_C = String(bit_5) + "," + String(bit_4) + "," + String(bit_3) + "," + String(bit_2) + "," + String(bit_1) + "," + String(bit_0);    
     
     num = d *2 ;
-    bit_0 = !bitRead(num, 5); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO0);} else {dividerD.turnGpioOff(MCP_GPIO0);}
-    bit_1 = !bitRead(num, 4); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO1);} else {dividerD.turnGpioOff(MCP_GPIO1);}
-    bit_2 = !bitRead(num, 3); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO2);} else {dividerD.turnGpioOff(MCP_GPIO2);}
-    bit_3 = !bitRead(num, 2); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO3);} else {dividerD.turnGpioOff(MCP_GPIO3);}
-    bit_4 = !bitRead(num, 1); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO4);} else {dividerD.turnGpioOff(MCP_GPIO4);}
-    bit_5 = !bitRead(num, 0); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO5);} else {dividerD.turnGpioOff(MCP_GPIO5);}
-    byte_D = String(bit_0) + "," + String(bit_1) + "," + String(bit_2) + "," + String(bit_3) + "," + String(bit_4) + "," + String(bit_5);
-    
+    bit_0 = !bitRead(num, 0); if (bit_0 == 1){ dividerD.turnGpioOn(MCP_GPIO0);} else {dividerD.turnGpioOff(MCP_GPIO0);}
+    bit_1 = !bitRead(num, 1); if (bit_1 == 1){ dividerD.turnGpioOn(MCP_GPIO1);} else {dividerD.turnGpioOff(MCP_GPIO1);}
+    bit_2 = !bitRead(num, 2); if (bit_2 == 1){ dividerD.turnGpioOn(MCP_GPIO2);} else {dividerD.turnGpioOff(MCP_GPIO2);}
+    bit_3 = !bitRead(num, 3); if (bit_3 == 1){ dividerD.turnGpioOn(MCP_GPIO3);} else {dividerD.turnGpioOff(MCP_GPIO3);}
+    bit_4 = !bitRead(num, 4); if (bit_4 == 1){ dividerD.turnGpioOn(MCP_GPIO4);} else {dividerD.turnGpioOff(MCP_GPIO4);}
+    bit_5 = !bitRead(num, 5); if (bit_5 == 1){ dividerD.turnGpioOn(MCP_GPIO5);} else {dividerD.turnGpioOff(MCP_GPIO5);}
+    byte_D = String(bit_5) + "," + String(bit_4) + "," + String(bit_3) + "," + String(bit_2) + "," + String(bit_1) + "," + String(bit_0);    
     if (debug == 1) {
         Serial.println( "Freq: " + freq + ";  Gain: " + gain + ";   ATT:" + relative_att );
         Serial.println("Computing values for " + String(att) + "dB");  
@@ -169,7 +170,7 @@ void compute(){
         Serial.println("writting divider D with " + byte_D );
         Serial.println("___________________________________________________________________________________ \n");    
     }
-    ad9850(freq.toInt());
+    ad9850(freq.toInt()* 10);
     MCP4725.setVoltage(4096 - gain.toInt(), false);
 }
 
